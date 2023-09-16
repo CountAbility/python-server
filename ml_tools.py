@@ -67,6 +67,7 @@ def img_object_detection(base64_string, save_boxes=False):
     image = cv2.imdecode(nparr, cv2.IMREAD_GRAYSCALE)
 
 
+
     # Blur the image
     kernel_size = (5, 5)  # you can adjust the kernel size as needed
     image = cv2.GaussianBlur(image, kernel_size, 0)
@@ -74,7 +75,7 @@ def img_object_detection(base64_string, save_boxes=False):
     image = cv2.bitwise_not(image)
 
     if image is not None:
-        threshold_value = 20
+        threshold_value = 80
         _, mask = cv2.threshold(image, threshold_value, 255, cv2.THRESH_BINARY)
         cv2.imwrite("mask.png", mask)
 
@@ -94,7 +95,7 @@ def img_object_detection(base64_string, save_boxes=False):
     boxes = extract_bboxes(mask_3d)
 
     # Set a minimum percentage threshold for bounding box area
-    min_percentage = 10.0  # 10% of the total image area
+    min_percentage = 5.0  # 10% of the total image area
     min_area = (image.shape[0] * image.shape[1] * min_percentage) / 100
 
     # Filter bounding boxes based on the minimum area
@@ -140,25 +141,29 @@ def img_object_detection(base64_string, save_boxes=False):
         else:
             print(f"Failed to convert segment {idx} to bytes")
         
-        
+        print(idx)
 
         objects = localize_bytes(segment_bytes)
-        
-        filtered_objects = [(object_.name, object_.score) for object_ in objects if object_.score > 0.5]
+
+        print([(object_.name, object_.score) for object_ in objects])
+        filtered_objects = [(object_.name, object_.score) for object_ in objects if object_.score > 0.3]
         #print(filtered_objects)
 
         objects_list.append(filtered_objects)
 
     #sort inner object list by object score
     objects_list = [sorted(objects, key=lambda x: x[1], reverse=True) for objects in objects_list]
-
+    print(objects_list)
     #print(objects_list)
-
+    # TODO causes crash if nothing is detected
     # filter objects to remove second object in each segment
-    objects_list = [objects[0] for objects in objects_list]
 
+
+    objects_list = [objects[0] for objects in objects_list]
+    print(objects_list)
     #get only the names
     objects_list = [object_[0] for object_ in objects_list]
+    print(objects_list)
 
     return objects_list
 

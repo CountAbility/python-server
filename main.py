@@ -29,8 +29,12 @@ async def camera_feed(websocket: WebSocket):
     await websocket.accept()
     while True:
         data = await websocket.receive_text()
+        if str(data) == 'null' or not data:
+            await websocket.send_json({})
+            continue
 
         #print(data)
+        print(data[0:100])
 
         data = data.split(",")[1]
 
