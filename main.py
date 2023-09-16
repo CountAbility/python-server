@@ -5,6 +5,9 @@ import crud
 import models
 import schemas
 from database import SessionLocal, engine
+from fastapi import FastAPI, WebSocket
+from tools import localize_bytes
+from time import sleep
 
 app = FastAPI()
 
@@ -24,10 +27,16 @@ def get_db():
 async def camera_feed(websocket: WebSocket):
     await websocket.accept()
     while True:
-        print("------------------------------------------------------------------------------------")
         data = await websocket.receive_text()
-        alerts = [{"text": "Missing Scalpel 1", "severity": "warning"}]
-        await websocket.send_json(alerts)
+
+        #print(data)
+
+        data = data.split(",")[1]
+
+        output = localize_bytes(data)
+
+        print(output)
+        await websocket.send_json({})
 
 
 @app.websocket("/alerts")
