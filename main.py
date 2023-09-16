@@ -36,8 +36,7 @@ async def camera_feed(websocket: WebSocket):
 
         output = img_object_detection(data)
 
-        print(output)
-        await websocket.send_json({})
+        await websocket.send_json(output)
 
 
 @app.websocket("/alerts")

@@ -156,7 +156,11 @@ def img_object_detection(base64_string, save_boxes=False):
 
     # filter objects to remove second object in each segment
     objects_list = [objects[0] for objects in objects_list]
-    print(objects_list)
+
+    #get only the names
+    objects_list = [object_[0] for object_ in objects_list]
+
+    return objects_list
 
         
 
