@@ -8,6 +8,7 @@ from database import SessionLocal, engine
 from fastapi import FastAPI, WebSocket
 from tools import localize_bytes
 from time import sleep
+from ml_tools import img_object_detection
 
 app = FastAPI()
 
@@ -33,7 +34,7 @@ async def camera_feed(websocket: WebSocket):
 
         data = data.split(",")[1]
 
-        output = localize_bytes(data)
+        output = img_object_detection(data)
 
         print(output)
         await websocket.send_json({})
