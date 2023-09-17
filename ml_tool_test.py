@@ -1,6 +1,6 @@
 import cv2
 import base64
-from ml_tools import img_object_detection
+from ml_tools import img_object_detection, localize_bytes
 
 # Read the image using OpenCV
 image = cv2.imread("./images/Lork.jpg")
@@ -12,7 +12,7 @@ cv2.imshow("image", image)
 retval, encoded_image = cv2.imencode(".jpg", image)
 
 # Convert the encoded image bytes to base64
-encoded_string = base64.b64encode(encoded_image).decode("utf-8")
+encoded_string = base64.b64encode(encoded_image).decode("uthf-8")
 
-test = img_object_detection(encoded_string)
+test = localize_bytes(encoded_string)
 print(test)

@@ -48,7 +48,7 @@ def localize_bytes(bytes):
             #print("Normalized bounding polygon vertices: ")
         #    for vertex in object_.bounding_poly.normalized_vertices:
                 #print(f" - ({vertex.x}, {vertex.y})")
-
+        print(objects)
         return objects
 
 
@@ -169,6 +169,3 @@ def img_object_detection(base64_string, save_boxes=False):
     return objects_list
 
         
-
-
-
