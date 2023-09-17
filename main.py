@@ -38,7 +38,7 @@ async def camera_feed(websocket: WebSocket):
 
         data = data.split(",")[1]
 
-        output = img_object_detection(data)
+        output = img_object_detection(data, save_boxes=True)
 
         await websocket.send_json(output)
 
