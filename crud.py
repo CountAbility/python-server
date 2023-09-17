@@ -28,7 +28,10 @@ def create_alert(db: Session, alert: schemas.AlertCreate):
         surgery_id=alert.surgery_id,
         message=alert.message,
         severity=alert.severity,
-        time_started=alert.time_started
+        time_started=alert.time_started,
+        time_resolved=datetime.max,
+        overridden=False,
+        resolved=False
     )
 
     db.add(db_alert)
@@ -49,15 +52,22 @@ def create_med_pro(db: Session, med_pro: schemas.MedProfessionalCreate):
 
 
 def get_surgery_alerts(db: Session, surgery_id: UUID):
-    return db.query(models.Alert).filter(models.Alert.surgery_id == surgery_id).all()
-
-
-def get_med_pro_by_id(db: Session, id: UUID):
-    return db.query(models.MedProfessional).filter(models.MedProfessional.id == id).first()
-
-
-def get_med_pro_by_name(db: Session, name: str):
-    return db.query(models.MedProfessional).filter(models.MedProfessional.name == name).first()
+    return list(map(lambda e: schemas.Alert(
+        surgery_id=e.surgery_id,
+        message=e.message,
+        severity=e.severity,
+        time_started=e.time_started,
+        time_resolved=e.time_resolved,
+        overridden=e.overridden,
+        resolved=e.resolved,
+        id=e.id
+    ), db.query(models.Alert).filter(models.Alert.surgery_id == surgery_id).all()))
+# def get_med_pro_by_id(db: Session, id: UUID):
+#     return db.query(models.MedProfessional).filter(models.MedProfessional.id == id).first()
+#
+#
+# def get_med_pro_by_name(db: Session, name: str):
+#     return db.query(models.MedProfessional).filter(models.MedProfessional.name == name).first()
 
 
 def get_surgeries(db: Session):

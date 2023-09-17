@@ -75,7 +75,7 @@ def img_object_detection(base64_string, save_boxes=False):
     image = cv2.bitwise_not(image)
 
     if image is not None:
-        threshold_value = 80
+        threshold_value = 130
         _, mask = cv2.threshold(image, threshold_value, 255, cv2.THRESH_BINARY)
         cv2.imwrite("mask.png", mask)
 
@@ -162,7 +162,8 @@ def img_object_detection(base64_string, save_boxes=False):
     objects_list = [objects[0] for objects in objects_list]
     print(objects_list)
     #get only the names
-    objects_list = [object_[0] for object_ in objects_list]
+    if objects_list is not [[]]:
+        objects_list = [object_[0] for object_ in objects_list]
     print(objects_list)
 
     return objects_list

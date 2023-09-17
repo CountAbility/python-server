@@ -41,6 +41,8 @@ class Alert(AlertBase):
         orm_mode = True
 
 
+
+
 class MedProfessionalBase(BaseModel):
     name: str
 

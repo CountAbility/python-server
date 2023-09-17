@@ -1,9 +1,15 @@
+from datetime import datetime
+from random import randint
+from uuid import UUID
+
 from fastapi import FastAPI, WebSocket, Depends
 from sqlalchemy.orm import Session
+from starlette.websockets import WebSocketDisconnect
 
 import crud
 import models
 import schemas
+from alert_manager import AlertManager
 from database import SessionLocal, engine
 from fastapi import FastAPI, WebSocket
 from tools import localize_bytes
@@ -24,28 +30,48 @@ def get_db():
         db.close()
 
 
+alert_manager = AlertManager()
+
+
 @app.websocket("/feed")
-async def camera_feed(websocket: WebSocket):
+async def camera_feed(websocket: WebSocket, db: Session = Depends(get_db)):
     await websocket.accept()
-    while True:
-        data = await websocket.receive_text()
-        if str(data) == 'null' or not data:
-            await websocket.send_json({})
-            continue
+    try:
+        while True:
+            try:
+                data = await websocket.receive_json()
 
-        #print(data)
-        print(data[0:100])
+                if not data["image"]:
+                    await websocket.send_json({})
+                    continue
 
-        data = data.split(",")[1]
+                alert = schemas.AlertCreate(
+                    surgery_id=UUID(data["surgery"]),
+                    message="Alert!!",
+                    severity=randint(1, 4),
+                    time_started=datetime.now()
+                )
 
-        output = img_object_detection(data, save_boxes=True)
+                crud.create_alert(db, alert)
+                await alert_manager.broadcast_alerts(db, UUID(data["surgery"]))
 
-        await websocket.send_json(output)
+                output = img_object_detection(data["image"], save_boxes=True)
+
+                await websocket.send_json(output)
+            except WebSocketDisconnect:
+                pass
+    except WebSocketDisconnect:
+        pass
 
 
 @app.websocket("/alerts")
 async def alert_feed(websocket: WebSocket):
-    await websocket.accept()
+    await alert_manager.connect(websocket)
+    try:
+        while True:
+            data = await websocket.receive_json()
+    except WebSocketDisconnect:
+        alert_manager.disconnect(websocket)
 
 
 @app.post("/createsurgery", response_model=schemas.SurgicalRecord)
