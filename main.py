@@ -1,3 +1,4 @@
+import time
 from datetime import datetime
 from random import randint
 from uuid import UUID
@@ -13,6 +14,8 @@ import schemas
 from alert_manager import AlertManager
 from database import SessionLocal, engine
 from fastapi import FastAPI, WebSocket
+
+from diffengine import DiffEngine
 from tools import localize_bytes
 from time import sleep
 from ml_tools import img_object_detection
@@ -37,6 +40,9 @@ def get_db():
 
 
 alert_manager = AlertManager()
+initials = ['knife', 'knife']
+diff_engine = DiffEngine()
+diff_engine.set_initial_items(initials)
 
 
 @app.websocket("/feed")
@@ -46,20 +52,15 @@ async def camera_feed(websocket: WebSocket, db: Session = Depends(get_db)):
         while True:
             try:
                 data = await websocket.receive_json()
+                if (datetime.now().timestamp() - data["timestamp"]) > 2:
+                    continue
 
                 if not data["image"]:
                     await websocket.send_json({})
                     continue
 
-                alert = schemas.AlertCreate(
-                    surgery_id=UUID(data["surgery"]),
-                    message="Alert!!",
-                    severity=randint(1, 4),
-                    time_started=datetime.now()
-                )
 
-                crud.create_alert(db, alert)
-                await alert_manager.broadcast_alerts(db, UUID(data["surgery"]))
+
 
                 # output = localize_bytes(data)
 
@@ -70,16 +71,16 @@ async def camera_feed(websocket: WebSocket, db: Session = Depends(get_db)):
                 # if output is not [[]]:
                 #    output = output[0][0]
 
-                model = YOLO("/Users/malcolmkrolick/Documents/GitHub/python-server/best.pt")
+                model = YOLO("best.pt")
 
                 # Decode the base64 string
                 decoded_bytes = base64.b64decode(data["image"])
+                print(data["image"][1:100])
 
                 # Convert bytes to numpy array
-                img = np.frombuffer(decoded_bytes, np.uint8)
+                img = cv2.imdecode(np.frombuffer(decoded_bytes, np.uint8), cv2.IMREAD_COLOR)
 
                 class_names = ["scissors", "knife"]
-
                 results = model(img)
 
                 classes_gen = []
@@ -100,12 +101,33 @@ async def camera_feed(websocket: WebSocket, db: Session = Depends(get_db)):
 
                 print(classes_gen)
 
+                diff_engine.set_current_items(map(lambda x: x[0], classes_gen))
+                diff = diff_engine.compare()
+                print(diff)
+
+                crud.delete_alerts(db)
+
+                for k in diff:
+                    for i in range(diff[k]):
+                        alert = schemas.AlertCreate(
+                            surgery_id=UUID(data["surgery"]),
+                            message=f"Missing {k}",
+                            severity=diff_engine.surgery_status,
+                            time_started=datetime.now()
+                        )
+
+                        crud.create_alert(db, alert)
+
+                await alert_manager.broadcast_alerts(db, UUID(data["surgery"]))
+
+                print(datetime.now().timestamp())
+
                 await websocket.send_json(classes_gen)
             except WebSocketDisconnect:
                 pass
 
-except WebSocketDisconnect:
-pass
+    except WebSocketDisconnect:
+        pass
 
 
 @app.websocket("/alerts")
@@ -127,3 +149,11 @@ def create_surgery(surgery: schemas.SurgicalRecordCreate, db: Session = Depends(
 @app.get("/surgeries")
 def get_surgeries(db: Session = Depends(get_db)):
     return crud.get_surgeries(db)
+@app.get("/initialitems")
+def get_initial_items():
+    return initials
+
+@app.get("/updatestatus/{status}")
+def update_status(status):
+    diff_engine.surgery_status = status
+

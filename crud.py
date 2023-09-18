@@ -40,6 +40,10 @@ def create_alert(db: Session, alert: schemas.AlertCreate):
     return db_alert
 
 
+def delete_alerts(db: Session):
+    db.query(models.Alert).delete()
+
+
 def create_med_pro(db: Session, med_pro: schemas.MedProfessionalCreate):
     db_med_pro = models.MedProfessional(
         id=uuid4(),
@@ -62,6 +66,8 @@ def get_surgery_alerts(db: Session, surgery_id: UUID):
         resolved=e.resolved,
         id=e.id
     ), db.query(models.Alert).filter(models.Alert.surgery_id == surgery_id).all()))
+
+
 # def get_med_pro_by_id(db: Session, id: UUID):
 #     return db.query(models.MedProfessional).filter(models.MedProfessional.id == id).first()
 #
