@@ -1,0 +1,3 @@
+0 1 Scalpel, 1 Scissor, 1 Tweezer
+1 5 Scissors, 1 Tweezers
+2 2 Scissors, 1 Tweezer, 1 Needle
